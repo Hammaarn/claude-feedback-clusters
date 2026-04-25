@@ -18,7 +18,7 @@ cp hooks/feedback-capture.py ~/.claude/hooks/feedback-capture.py
 chmod +x ~/.claude/hooks/feedback-capture.py   # POSIX
 ```
 
-Windows: same place, no chmod needed. `~/.claude/hooks/` = `%USERPROFILE%\.claude\hooks\`.
+Windows: same place, no chmod needed. `~/.claude/hooks/` resolves to `%USERPROFILE%\.claude\hooks\`.
 
 ## 3. Wire the hook in `~/.claude/settings.json`
 
@@ -73,9 +73,9 @@ The minimal version:
 Memory root: <MEMORY_ROOT>
 Feedback at `<MEMORY_ROOT>/feedback-clusters/`.
 
-- **Session start:** Read ALL global clusters + current project clusters before responding. Behavioral substrate — skip = repeat old mistakes.
-- **"Feedback: text" from me:** Hook flags. YOU pick the right cluster from context (project + content), append using the Rule + Why + How to apply format.
-- **Hygiene:** Max ~20 rules per cluster. Beyond → consolidate overlapping rules.
+- **Session start:** Read ALL global clusters + current project clusters before responding. Behavioral substrate. Skipping it means repeating old mistakes.
+- **"Feedback: text" from me:** Hook flags it. YOU pick the right cluster from context (project + content), append using the Rule + Why + How to apply format.
+- **Hygiene:** Max ~20 rules per cluster. Beyond that, consolidate overlapping rules.
 ```
 
 ## Test it
@@ -88,7 +88,7 @@ Feedback: when reviewing code, always check for hardcoded secrets before approvi
 
 Claude should:
 1. Acknowledge the feedback
-2. Pick a cluster (probably `shipping-quality.md` or you might have a `security.md`)
+2. Pick a cluster (probably `shipping-quality.md`, or a `security.md` if you've added one)
 3. Append the rule in the Rule + Why + How to apply format
 4. Surface what it wrote so you can verify
 
@@ -96,10 +96,10 @@ Open the cluster file. New entry should be there.
 
 ## Troubleshooting
 
-**Hook didn't fire:** Run `python ~/.claude/hooks/feedback-capture.py < /dev/null` — if it errors, your Python install or path is wrong. Check `~/.claude/settings.json` syntax (JSON validator).
+**Hook didn't fire.** Run `python ~/.claude/hooks/feedback-capture.py < /dev/null`. If it errors, your Python install or path is wrong. Check `~/.claude/settings.json` syntax with a JSON validator.
 
-**Claude wrote to the wrong cluster:** Tell it. The next session will land it correctly because the cluster you tell it about is now in context. Move the entry manually if you want to fix it now.
+**Claude wrote to the wrong cluster.** Tell it. The next session lands it correctly because the cluster you flagged is now in context. Move the entry manually if you want to fix it now.
 
-**Rules not being followed:** Check `MEMORY.md` actually points at the cluster files, and your `CLAUDE.md` includes the session-start instruction. The protocol depends on Claude reading clusters at start; without that read, the rules don't enter context.
+**Rules not being followed.** Check `MEMORY.md` actually points at the cluster files, and your `CLAUDE.md` includes the session-start instruction. The protocol depends on Claude reading clusters at start. Without that read, the rules don't enter context.
 
-**Want to compress a bloated cluster:** Ask Claude to compress it while preserving the Rule + Why + How to apply structure. Don't compress to bare bullets — `Why` is what makes rules apply at edge cases.
+**Want to compress a bloated cluster.** Ask Claude to compress it while preserving the Rule + Why + How to apply structure. Don't compress to bare bullets. The `Why` is what makes rules apply at edge cases.

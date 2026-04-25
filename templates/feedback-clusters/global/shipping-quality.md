@@ -19,6 +19,6 @@ Use the format spec at `feedback-clusters/_format-spec.md`.
 
 <!-- Example entry (delete when you add your own):
 
-1. **[S#1] Never auto-deploy to production — always surface and wait for approval.** **Why:** S#0, auto-deploy fired on a half-finished branch and broke production migration. **How to apply:** before any `vercel deploy` / `git push origin main` / production-affecting command, (a) surface the action, (b) state what will be deployed, (c) wait for explicit approval.
+1. **[S#1] Never auto-deploy to production. Always surface and wait for approval.** **Why:** S#0, auto-deploy fired on a half-finished branch and broke production migration. **How to apply:** before any `vercel deploy` / `git push origin main` / production-affecting command, (a) surface the action, (b) state what will be deployed, (c) wait for explicit approval.
 
 -->

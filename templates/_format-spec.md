@@ -1,6 +1,6 @@
 # Cluster Entry Format
 
-Every cluster entry uses three parts. This format is load-bearing — bullet-only rules drift; rules with `Why` survive RLHF gradient pull toward agreeable interpretation.
+Every cluster entry uses three parts. This format is load-bearing. Bullet-only rules drift. Rules with `Why` survive RLHF gradient pull toward agreeable interpretation.
 
 ## The format
 
@@ -14,18 +14,18 @@ N. **[S#<session>] Rule stated in one line.** Optional clarifying sentence. **Wh
 - One declarative sentence
 - States the behavior to encode
 - Imperative voice ("Don't X", "Always Y", "When X, do Y")
-- Should make sense without the Why — the Why is for edge cases, not for understanding the rule
+- Should make sense without the Why. The Why is for edge cases, not for understanding the rule.
 
 **Bad:** *"Be careful with deploys"* (vague, no behavior)
-**Good:** *"Never auto-deploy to production — always surface and wait for approval."* (specific, actionable)
+**Good:** *"Never auto-deploy to production. Always surface and wait for approval."* (specific, actionable)
 
 ### Why
 - The incident, mechanism, or stated preference that produced the rule
 - Includes session reference (`S#42`) when applicable, so you can trace context later
-- Direct quotes from the user are highest-signal — preserve them
+- Direct quotes from the user are highest-signal. Preserve them.
 
 **Bad:** *"Why: it's important"* (no information)
-**Good:** *"Why: S#37 — auto-deploy fired on a half-finished branch, broke production migration. User: 'never deploy without me clicking deploy.'"*
+**Good:** *"Why: S#37, auto-deploy fired on a half-finished branch and broke production migration. User: 'never deploy without me clicking deploy.'"*
 
 ### How to apply
 - The trigger condition (when this rule fires)
@@ -37,7 +37,7 @@ N. **[S#<session>] Rule stated in one line.** Optional clarifying sentence. **Wh
 
 ## Why this format works
 
-The base model (any LLM) drifts under RLHF gradient pull toward agreeable interpretation. A bare rule like *"don't auto-deploy"* gets pattern-matched against surface — and pattern-match fails at edge cases (what about staging? what about preview deploys? what about hotfixes?).
+The base model (any LLM) drifts under RLHF gradient pull toward agreeable interpretation. A bare rule like *"don't auto-deploy"* gets pattern-matched against surface text. Pattern-matching fails at edge cases (what about staging? what about preview deploys? what about hotfixes?).
 
 The `Why` makes the rule reasoning-applied instead of pattern-matched. Knowing *why* a rule exists lets the model judge whether a new situation falls inside or outside its scope.
 
@@ -47,10 +47,10 @@ The `How to apply` makes the rule operational. Without it, rules drift into phil
 
 - Max ~20 rules per cluster. Beyond that, consolidate.
 - When two rules have the same trigger condition, merge them.
-- When a rule gets superseded, mark it `[DEPRECATED — replaced by N]` rather than deleting — old session references should still resolve.
+- When a rule gets superseded, mark it `[DEPRECATED, replaced by N]` rather than deleting. Old session references should still resolve.
 - Compress aggressively when a cluster grows. Preserve Rule + Why + How to apply structure. Don't compress to bare bullets.
-- Direct quotes from the user are evidence — never paraphrase them away.
+- Direct quotes from the user are evidence. Never paraphrase them away.
 
 ## Numbering
 
-Rules are numbered for cross-reference (`see rule 17`). When you add a rule, use the next available number — don't reuse old numbers even if rules were deprecated. The visual order in the file doesn't have to match numerical order; it's the number that's load-bearing for cross-reference.
+Rules are numbered for cross-reference (`see rule 17`). When you add a rule, use the next available number. Don't reuse old numbers even if rules were deprecated. The visual order in the file doesn't have to match numerical order. The number is what's load-bearing for cross-reference.

@@ -7,7 +7,7 @@ A memory system for Claude Code that decomposes behavioral guidance into topic-s
 **What it does:**
 - Splits behavioral rules into **topic clusters** (`behavioral.md`, `technical.md`, `shipping-quality.md`, etc.)
 - Loads only the relevant ones at session start
-- Captures new feedback with a single trigger word — Claude routes it to the right cluster
+- Captures new feedback with a single trigger word. Claude routes it to the right cluster automatically.
 - Uses a `Rule + Why + How to apply` format that survives RLHF drift
 
 ---
@@ -23,16 +23,51 @@ Feedback: don't auto-deploy to production, always ask first
 `feedback-capture.py` fires on `UserPromptSubmit`, sees the `Feedback:` prefix, injects a routing instruction into Claude's context. **Zero LLM calls. Pure regex.**
 
 ### 3. Claude classifies and writes
-Claude already has full conversation context — it picks the right cluster (`shipping-quality.md` for this one) and appends the rule in the standard format.
+Claude already has full conversation context. It picks the right cluster (`shipping-quality.md` for this one) and appends the rule in the standard format.
 
 ### 4. Next session loads it back
-Session-start protocol reads all global clusters + active-project clusters. The rule is now substrate for every future response.
+Session-start protocol reads all global clusters plus active-project clusters. The rule is now substrate for every future response.
+
+---
+
+## Token economics (the selling point)
+
+This is the part that matters for anyone who's watched their context bloat over months.
+
+### Hook cost: zero tokens per prompt
+
+The hook is pure regex on user input. It runs in roughly 10ms, makes zero LLM calls, and adds zero tokens to your prompt cost.
+
+The only time the hook adds tokens is when `Feedback:` triggers. In that case it injects roughly 50 tokens of routing instruction into that one turn's context. That's the entire cost.
+
+### Cluster loading vs monolithic CLAUDE.md
+
+| What loads | Monolithic `CLAUDE.md` | Cluster system |
+|---|---|---|
+| Bootloader / protocol | Grows into one large file over time | Stays small (~1-2K tokens) |
+| Behavioral rules | Loaded as system context every prompt | Read once at session start via tool calls |
+| Project-specific rules | All projects' rules always in context | Only the active project's clusters load |
+| Cache write (first call) | Full rule corpus | Bootloader + only active clusters |
+| Cache read (subsequent) | ~10% of full corpus per prompt | ~10% of active subset per prompt |
+
+### Concrete example
+
+Suppose your full ruleset is 30K tokens, but only 40% of those rules apply to your current project.
+
+- **Monolithic CLAUDE.md:** ~30K token cache write on the first call, then ~3K tokens (cache reads) every subsequent prompt. The other 60% of rules are paid for on every turn even when irrelevant.
+- **Cluster system:** ~12K token cache write (bootloader + active clusters), then ~1.2K tokens per subsequent prompt. The 60% of irrelevant rules don't load at all.
+
+Over a 50-prompt session, that's roughly the difference between 177K and 71K tokens spent on rule context. About 60% reduction without losing any behavioral coverage.
+
+### The bigger win is attention, not just tokens
+
+Models have finite attention. A 30K-token wall gets skimmed. Topic-scoped clusters of 3-5K each stay legible. The rules you wrote actually get applied at the moment they should fire.
 
 ---
 
 ## The format
 
-Every entry uses three parts. This is load-bearing — bullet-only rules drift; rules with `Why` survive.
+Every entry uses three parts. This is load-bearing. Bullet-only rules drift. Rules with `Why` survive because Claude reasons about them instead of pattern-matching the surface text.
 
 ```markdown
 **[S#42] Don't auto-deploy without asking.** State the rule in one line.
@@ -41,9 +76,9 @@ Every entry uses three parts. This is load-bearing — bullet-only rules drift; 
 ```
 
 Why each part matters:
-- **Rule** — the behavior to encode
-- **Why** — the incident or reasoning, so the rule applies at edge cases instead of pattern-matching surface
-- **How to apply** — the trigger condition and concrete action, so it's not just a philosophy statement
+- **Rule**: the behavior to encode
+- **Why**: the incident or reasoning, so the rule applies at edge cases instead of pattern-matching surface
+- **How to apply**: the trigger condition and concrete action, so it's not just a philosophy statement
 
 ---
 
@@ -62,7 +97,7 @@ Why each part matters:
 
 ## Install
 
-See [INSTALL.md](INSTALL.md) — 5 steps, ~2 minutes.
+See [INSTALL.md](INSTALL.md). 5 steps, ~2 minutes.
 
 ```bash
 # Quick version
@@ -94,15 +129,15 @@ claude-feedback-clusters/
 │       └── token-process.md
 ```
 
-No dependencies. No build step. The hook is ~50 lines of Python stdlib.
+No dependencies. No build step. The hook is around 50 lines of Python stdlib.
 
 ---
 
 ## Customising clusters
 
-Default clusters work for most Claude Code use. Want different topics? Rename or add `.md` files in `feedback-clusters/global/`. Claude reads the filename + frontmatter `description` to know what belongs where.
+Default clusters work for most Claude Code use. Want different topics? Rename or add `.md` files in `feedback-clusters/global/`. Claude reads the filename plus frontmatter `description` to know what belongs where.
 
-For project-specific clusters, drop them under `feedback-clusters/<project-name>/` — only loads when that project is active.
+For project-specific clusters, drop them under `feedback-clusters/<project-name>/`. They only load when that project is active.
 
 ---
 

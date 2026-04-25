@@ -9,14 +9,14 @@ Paste this section into your project's `CLAUDE.md`. Adjust `<MEMORY_ROOT>` to po
 Memory root: `<MEMORY_ROOT>`
 Feedback at `<MEMORY_ROOT>/feedback-clusters/`.
 
-- **Session start:** Read ALL global clusters + current project clusters before responding. Behavioral substrate — skip = repeat old mistakes. ~2-3K tokens, non-negotiable.
+- **Session start:** Read ALL global clusters + current project clusters before responding. Behavioral substrate. Skipping it means repeating old mistakes. ~2-3K tokens, non-negotiable.
 - **"Feedback: text" from me:** Hook flags it. YOU pick the right cluster from context (project + content), append using the Rule + Why + How to apply format below.
 - **Format (every entry):**
   ```markdown
   N. **[S#<session>] Rule in one line.** State the rule declaratively. **Why:** the incident or reasoning that produced this rule. **How to apply:** when this kicks in and the concrete action.
   ```
-- **Hygiene:** Max ~20 rules per cluster. Beyond → consolidate overlapping rules. The rules with the same trigger condition should merge.
-- **Compression:** When a cluster gets too long, compress while preserving Rule + Why + How to apply structure. Don't compress to bare bullets — `Why` is what makes rules apply at edge cases.
+- **Hygiene:** Max ~20 rules per cluster. Beyond that, consolidate overlapping rules. Rules with the same trigger condition should merge.
+- **Compression:** When a cluster gets too long, compress while preserving Rule + Why + How to apply structure. Don't compress to bare bullets. The `Why` is what makes rules apply at edge cases.
 - **Project clusters:** Only loaded when that project is active. `<MEMORY_ROOT>/feedback-clusters/<project>/<category>.md`.
 - **Conflicts:** When rules conflict, surface the conflict explicitly. Don't silently pick one.
 

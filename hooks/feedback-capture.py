@@ -1,5 +1,5 @@
 """
-Feedback Capture Hook — Detects feedback trigger and flags for Claude to route.
+Feedback Capture Hook. Detects feedback trigger and flags for Claude to route.
 
 Hooks into: UserPromptSubmit
 Trigger: Message starts with "Feedback:" or "Feedback " (case-insensitive)
@@ -7,12 +7,12 @@ Format: "Feedback: text goes here" or "Feedback text goes here"
 
 This hook does NOT write to files or route to clusters.
 It only detects the trigger and injects a routing instruction into Claude's context.
-Claude has full conversation context and knows which project/domain — Claude does the routing.
+Claude has full conversation context and knows which project/domain, so Claude does the routing.
 
 Self-regulating: fires on every prompt, does nothing if no "Feedback" trigger.
-No feedback loop risk — UserPromptSubmit only fires on human input.
+No feedback loop risk: UserPromptSubmit only fires on human input.
 
-Zero dependencies — stdlib only.
+Zero dependencies. Stdlib only.
 """
 
 import json
@@ -30,10 +30,10 @@ def main():
     if not message:
         return
 
-    # Check for feedback trigger — starts with "Feedback" (case-insensitive)
+    # Check for feedback trigger: starts with "Feedback" (case-insensitive)
     match = re.match(r"^feedback\s*[:\-]?\s*(.+)", message.strip(), re.IGNORECASE | re.DOTALL)
     if not match:
-        return  # No trigger — silent exit
+        return  # No trigger, silent exit
 
     feedback_text = match.group(1).strip()
 
