@@ -30,38 +30,66 @@ Session-start protocol reads all global clusters plus active-project clusters. T
 
 ---
 
-## Token economics (the selling point)
+## Token economics (real numbers)
 
-This is the part that matters for anyone who's watched their context bloat over months.
+These numbers come from the author's actual setup, measured today. Your numbers will differ depending on how much of your guidance is project-specific, how many projects you run, and how often you switch contexts within a session. The patterns hold across setups even if the absolute numbers shift.
 
 ### Hook cost: zero tokens per prompt
 
-The hook is pure regex on user input. It runs in roughly 10ms, makes zero LLM calls, and adds zero tokens to your prompt cost.
+The hook is pure regex on user input. It runs in roughly 10ms, makes zero LLM calls, and adds zero tokens to your prompt cost. The only time it adds tokens is when `Feedback:` triggers, in which case it injects ~50 tokens of routing instruction into that one turn's context. That's the entire cost.
 
-The only time the hook adds tokens is when `Feedback:` triggers. In that case it injects roughly 50 tokens of routing instruction into that one turn's context. That's the entire cost.
+### Author's actual setup
 
-### Cluster loading vs monolithic CLAUDE.md
+Token counts approximate (markdown averages ~3.5 chars per token).
 
-| What loads | Monolithic `CLAUDE.md` | Cluster system |
-|---|---|---|
-| Bootloader / protocol | Grows into one large file over time | Stays small (~1-2K tokens) |
-| Behavioral rules | Loaded as system context every prompt | Read once at session start via tool calls |
-| Project-specific rules | All projects' rules always in context | Only the active project's clusters load |
-| Cache write (first call) | Full rule corpus | Bootloader + only active clusters |
-| Cache read (subsequent) | ~10% of full corpus per prompt | ~10% of active subset per prompt |
+**Bootloader, loaded as system context every prompt:**
+- `CLAUDE.md`: ~2,900 tokens
 
-### Concrete example
+**Loaded once per session via tool reads (then cached in conversation context):**
+- `MEMORY.md` router: ~2,000 tokens
+- 6 global clusters: ~12,650 tokens combined
+  - `agent-dispatch.md`: ~1,475
+  - `behavioral.md`: ~2,900
+  - `character-pipeline.md`: ~850
+  - `shipping-quality.md`: ~1,825
+  - `technical.md`: ~3,500
+  - `token-process.md`: ~2,090
 
-Suppose your full ruleset is 30K tokens, but only 40% of those rules apply to your current project.
+**Project clusters, only loaded when that project is active:**
+- 3 projects currently with clusters, ~2,000 tokens combined when relevant project is loaded
 
-- **Monolithic CLAUDE.md:** ~30K token cache write on the first call, then ~3K tokens (cache reads) every subsequent prompt. The other 60% of rules are paid for on every turn even when irrelevant.
-- **Cluster system:** ~12K token cache write (bootloader + active clusters), then ~1.2K tokens per subsequent prompt. The 60% of irrelevant rules don't load at all.
+### What this would look like as monolithic CLAUDE.md
 
-Over a 50-prompt session, that's roughly the difference between 177K and 71K tokens spent on rule context. About 60% reduction without losing any behavioral coverage.
+If every rule from every cluster lived in one `CLAUDE.md`:
+- ~20,000 tokens loaded as system context **every prompt**
+- All projects' rules always in context, even when working on a different project
 
-### The bigger win is attention, not just tokens
+### Where the savings actually come from
 
-Models have finite attention. A 30K-token wall gets skimmed. Topic-scoped clusters of 3-5K each stay legible. The rules you wrote actually get applied at the moment they should fire.
+Honest framing: when most of your ruleset is genuinely global (loads regardless of project), per-session token savings are modest. The wins are structural:
+
+1. **System-context surface stays small.** ~2,900 tokens of `CLAUDE.md` vs ~20,000 tokens. System context is sent every prompt and is the hardest to control for bloat. Keeping it small keeps it maintainable.
+
+2. **Project switching is free.** With 3 active projects each carrying ~2,000 tokens of project-specific rules, monolithic mode pays all of them on every prompt regardless of which project you're in. Cluster mode loads only the current project's slice. The more projects you have, the bigger this gets.
+
+3. **Per-cluster compression is tractable.** This repo's author just compressed `behavioral.md` from ~5,800 tokens to ~2,900 tokens (50% reduction) without losing any rules, in one editing pass. Try compressing a 20K monolithic file and you risk breaking unrelated rules. Per-cluster compression is the only realistic path to keeping the system maintainable over years.
+
+4. **Attention budget is the bigger win.** Models have finite attention. A 20K monolithic CLAUDE.md gets skimmed; topic-scoped clusters of 2-3K each get attended to and applied. Token cost is similar; behavioral compliance is not.
+
+### Estimating your own numbers
+
+```bash
+# Bootloader
+wc -c CLAUDE.md
+
+# All cluster content
+wc -c <memory-root>/feedback-clusters/global/*.md
+wc -c <memory-root>/feedback-clusters/<project>/*.md
+
+# Divide bytes by ~3.5 to approximate tokens
+```
+
+Higher savings if you have many projects with substantial project-specific rules. Lower savings if your guidance is mostly global. Maintenance benefit applies regardless of setup.
 
 ---
 
