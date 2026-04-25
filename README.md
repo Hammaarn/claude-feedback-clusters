@@ -169,6 +169,49 @@ For project-specific clusters, drop them under `feedback-clusters/<project-name>
 
 ---
 
+## Compression & cleanup
+
+Clusters grow. Without maintenance they bloat past attention budget and stop being useful. The cluster system slows the rot because topic-scoping isolates it, but it doesn't eliminate it.
+
+### When to compress
+
+A cluster is asking for compression when:
+- It crosses ~20 rules (soft cap; beyond that attention drops)
+- The file feels heavy when you read it (your own attention is the canary)
+- You catch yourself adding a rule that already exists in different words
+- A new rule wants to fit but the file is already too long to scan
+
+Compression isn't removing rules. It's tightening prose while preserving the `Rule + Why + How to apply` substrate.
+
+### How to compress safely
+
+1. **Keep the three parts.** Every entry still needs Rule + Why + How to apply. Don't compress to bare bullets. The `Why` is what makes rules apply at edge cases instead of pattern-matching surface text.
+2. **Keep direct quotes and `[S#X]` tags.** User quotes are evidence. Session tags are traceability. Never paraphrase them away.
+3. **Keep sub-points.** If a `How to apply` has (a), (b), (c) concrete steps, tighten prose around them, not the steps themselves.
+4. **Cut redundancy.** Most bloat is `Why` and `How to apply` saying the same thing twice in different words. Merge.
+5. **Cut parenthetical drift.** "In other words" / "that is" / "which means" expansions usually restate the rule for emphasis. Drop them.
+6. **Verify after.** Use the compressed cluster for a few sessions. If previously-caught edge cases start getting missed, restore the substrate you cut.
+
+Real example: this repo's `behavioral.md` template comes from the author's actual cluster, compressed from ~5,800 tokens to ~2,900 tokens (50% reduction) in one editing pass without losing any rules. Behavior held across sessions.
+
+### When to deprecate, merge, or remove
+
+**Deprecate** when a rule is superseded by a broader rule, references a bug that's been permanently fixed, or points at a system you've torn out. Annotate as `[DEPRECATED, replaced by N]` rather than deleting. Old session references should still resolve, and the historical context is sometimes useful.
+
+**Merge** when two rules have the same trigger condition. Either they're both right (combine into one rule with both implications), or they conflict (pick one, deprecate the other with a pointer to the chosen one). Conflicting rules in the same cluster will silently pick one based on order. Surface them yourself.
+
+**Remove** rarely. Most rules earn their keep even when they fire infrequently. The exception: rules referencing systems that no longer exist in your setup at all.
+
+### Cadence
+
+- **Threshold-triggered.** Compress when a cluster crosses ~20 rules or feels heavy when read.
+- **After project transitions.** When a project ends or shifts direction significantly, audit its project-specific cluster for stale rules.
+- **Periodic.** Monthly or session-milestone gardening pass. Skipping this is how clusters drift back into wall-of-text territory.
+
+Untended clusters drift the same way untended `CLAUDE.md` files do, just more slowly. Maintenance is recurring, not one-shot.
+
+---
+
 ## License
 
 MIT. Use it, fork it, ship your own version.
